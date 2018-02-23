@@ -3,6 +3,13 @@ package com.test.headline.httpRequest;
 
 import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 
+import java.io.IOException;
+import java.util.Map;
+
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -11,33 +18,50 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 
 public class RetrofitManager {
-
-    //新闻头条base url
-    private static final String BASE_URL = "http://v.juhe.cn/toutiao/index";
     private Retrofit retrofit;
+    private String baseUrl;
+    private OkHttpClient client;
 
     private RetrofitManager() {
-        init();
+        client = OkHttpUtils.getOkHttpClient();
     }
 
     public static RetrofitManager getInstance() {
         return Holder.INSTANCE;
     }
 
-    private static class Holder{
+    private static class Holder {
         private static final RetrofitManager INSTANCE = new RetrofitManager();
     }
 
-    private void init(){
+    /**设置base url*/
+    void setBaseUrl(String url) {
+        baseUrl = url;
+    }
+
+    /**设置请求头*/
+    void setHeaders(final Map<String,String> headers) {
+        client = client.newBuilder().addInterceptor(new Interceptor() {
+            @Override
+            public Response intercept(Chain chain) throws IOException {
+                Request oldRequest = chain.request();
+                Request.Builder builder = oldRequest.newBuilder();
+                for (Map.Entry<String, String> entry : headers.entrySet()) {
+                    builder.header(entry.getKey(),entry.getValue());
+                }
+                return chain.proceed(builder.build());
+            }
+        }).build();
+    }
+
+    /**获取retrofit实例*/
+    Retrofit getRetrofit() {
         retrofit = new Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .client(OkHttpUtils.getOkHttpClient())
+                .baseUrl(baseUrl)
+                .client(client)
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
-    }
-
-    public NetApi getService() {
-        return retrofit.create(NetApi.class);
+        return retrofit;
     }
 }

@@ -3,13 +3,9 @@ package com.test.headline.httpRequest;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 
 /**
@@ -29,29 +25,16 @@ public class OkHttpUtils {
             if (isDebug) {
                 clientBuilder.addInterceptor(loggingInterceptor);
             }
-            clientBuilder.addInterceptor(publicInterceptor)
-                    .connectTimeout(15, TimeUnit.SECONDS)
-                    .readTimeout(20,TimeUnit.SECONDS)
-                    .writeTimeout(20,TimeUnit.SECONDS)
+
+            clientBuilder.connectTimeout(15, TimeUnit.SECONDS)
+                    .readTimeout(20, TimeUnit.SECONDS)
+                    .writeTimeout(20, TimeUnit.SECONDS)
                     .retryOnConnectionFailure(true)
                     .build();
             okHttpClient = clientBuilder.build();
         }
         return okHttpClient;
     }
-
-    private static Interceptor publicInterceptor =  new Interceptor() {
-
-        @Override
-        public Response intercept(Chain chain) throws IOException {
-            Request oldRequest = chain.request();
-            //添加公共参数
-            Request request = oldRequest.newBuilder()
-                    //.header()
-                    .build();
-            return chain.proceed(request);
-        }
-    };
 
     private static HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
         @Override
